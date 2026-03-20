@@ -1,18 +1,16 @@
-// Service Worker mínimo — necessário para o Chrome reconhecer como PWA instalável
-const CACHE = 're-pwa-v1';
+// Service Worker — sem cache, sempre busca versão mais recente da rede
+self.addEventListener('install', () => self.skipWaiting());
 
-self.addEventListener('install', e => {
-  self.skipWaiting();
+self.addEventListener('activate', e => {
+  // Apaga todos os caches antigos ao ativar
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(['/', '/manifest.json', '/icon.png']))
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => clients.claim())
   );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(clients.claim());
-});
-
 self.addEventListener('fetch', e => {
-  // Passa tudo normalmente — sem cache agressivo para garantir sempre versão atualizada
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  // Sempre vai para a rede — sem cache
+  e.respondWith(fetch(e.request));
 });
