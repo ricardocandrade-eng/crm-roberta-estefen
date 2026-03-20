@@ -11,6 +11,36 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <title>Roberta Estefen — Psicologia</title>
+
+<!-- ═══════════════════════════════════════════════════
+     OneSignal — Push Notifications
+     Substitua SEU_APP_ID_ONESIGNAL pelo App ID real
+═══════════════════════════════════════════════════ -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "9468c173-c8ee-4251-95fb-1aafbdf582f0",
+      serviceWorkerPath: "OneSignalSDKWorker.js",
+      // Pede permissão de forma suave, sem popup agressivo
+      promptOptions: {
+        slidedown: {
+          prompts: [{
+            type: "push",
+            autoPrompt: true,
+            text: {
+              actionMessage: "Receba lembretes de consultas e avisos do consultório.",
+              acceptButton: "Permitir",
+              cancelButton: "Agora não"
+            },
+            delay: { pageViews: 1, timeDelay: 5 }
+          }]
+        }
+      }
+    });
+  });
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; overflow: hidden; background: #2D2347; }
