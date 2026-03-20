@@ -1,0 +1,19 @@
+{
+  "name": "Roberta Estefen — Psicologia",
+  "short_name": "Roberta Estefen",
+  "description": "CRM clínico — agenda, pacientes e financeiro",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2D2347",
+  "theme_color": "#2D2347",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
