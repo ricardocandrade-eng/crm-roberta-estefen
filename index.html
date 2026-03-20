@@ -23,6 +23,7 @@
     await OneSignal.init({
       appId: "9468c173-c8ee-4251-95fb-1aafbdf582f0",
       serviceWorkerPath: "OneSignalSDKWorker.js",
+      serviceWorkerParam: { scope: "/crm-roberta-estefen/" },
       // Pede permissão de forma suave, sem popup agressivo
       promptOptions: {
         slidedown: {
