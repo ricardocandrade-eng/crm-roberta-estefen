@@ -12,10 +12,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <title>Roberta Estefen — Psicologia</title>
 
-<!-- ═══════════════════════════════════════════════════
-     OneSignal — Push Notifications
-     Substitua SEU_APP_ID_ONESIGNAL pelo App ID real
-═══════════════════════════════════════════════════ -->
+<!-- OneSignal — Push Notifications -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -24,7 +21,6 @@
       appId: "9468c173-c8ee-4251-95fb-1aafbdf582f0",
       serviceWorkerPath: "OneSignalSDKWorker.js",
       serviceWorkerParam: { scope: "/crm-roberta-estefen/" },
-      // Pede permissão de forma suave, sem popup agressivo
       promptOptions: {
         slidedown: {
           prompts: [{
@@ -42,11 +38,11 @@
     });
   });
 </script>
+
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; overflow: hidden; background: #2D2347; }
 
-  /* ── Tela de carregamento ── */
   #splash {
     position: fixed; inset: 0; z-index: 100;
     background: linear-gradient(135deg, #2D2347 0%, #7B6CA8 100%);
@@ -56,6 +52,8 @@
   #splash img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
   #splash h1 { color: #F0EDF8; font-family: -apple-system, sans-serif; font-size: 20px; font-weight: 600; }
   #splash p  { color: #B8AEDA; font-family: -apple-system, sans-serif; font-size: 14px; }
+  #version   { color: rgba(184,174,218,0.5); font-family: -apple-system, sans-serif; font-size: 11px;
+               position: fixed; bottom: 16px; left: 0; right: 0; text-align: center; }
   .spinner {
     width: 32px; height: 32px;
     border: 3px solid rgba(240,237,248,0.2);
@@ -65,50 +63,10 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Modal de configuração (primeira vez) ── */
-  #setup {
-    position: fixed; inset: 0; z-index: 200;
-    background: linear-gradient(135deg, #2D2347 0%, #7B6CA8 100%);
-    display: none; flex-direction: column;
-    align-items: center; justify-content: center; padding: 32px 24px; gap: 16px;
-  }
-  #setup img { width: 80px; height: 80px; border-radius: 18px; margin-bottom: 8px; }
-  #setup h2 { color: #F0EDF8; font-family: -apple-system, sans-serif; font-size: 22px; font-weight: 700; text-align: center; }
-  #setup p  { color: #B8AEDA; font-family: -apple-system, sans-serif; font-size: 14px; text-align: center; line-height: 1.5; }
-  #setup input {
-    width: 100%; padding: 14px 16px; border-radius: 12px;
-    border: 2px solid rgba(240,237,248,0.2); background: rgba(255,255,255,0.1);
-    color: #F0EDF8; font-family: -apple-system, sans-serif; font-size: 14px;
-    outline: none;
-  }
-  #setup input::placeholder { color: #B8AEDA; }
-  #setup input:focus { border-color: #B8AEDA; }
-  #setup button {
-    width: 100%; padding: 16px; border-radius: 12px; border: none;
-    background: #F0EDF8; color: #2D2347;
-    font-family: -apple-system, sans-serif; font-size: 16px; font-weight: 700;
-    cursor: pointer; margin-top: 4px;
-  }
-  #setup .error { color: #FCA5A5; font-family: -apple-system, sans-serif; font-size: 13px; display: none; }
-
-  /* ── iframe principal ── */
-  #frame {
-    width: 100%; height: 100%;
-    border: none; display: block;
-  }
+  #frame { width: 100%; height: 100%; border: none; display: block; }
 </style>
 </head>
 <body>
-
-<!-- Tela de configuração (apenas na primeira vez) -->
-<div id="setup">
-  <img src="icon.png" alt="Ícone">
-  <h2>Configurar app</h2>
-  <p>Cole abaixo o link do seu sistema (Google Apps Script). Isso só precisa ser feito uma vez.</p>
-  <input type="url" id="urlInput" placeholder="https://script.google.com/macros/s/..." autocomplete="off">
-  <div class="error" id="urlError">Por favor, cole um link válido do Google Apps Script.</div>
-  <button onclick="saveUrl()">Salvar e abrir</button>
-</div>
 
 <!-- Tela de carregamento -->
 <div id="splash">
@@ -116,65 +74,42 @@
   <h1>Roberta Estefen</h1>
   <p>Psicologia</p>
   <div class="spinner"></div>
+  <span id="version">carregando...</span>
 </div>
 
 <!-- App -->
 <iframe id="frame" src="about:blank" allow="camera; microphone"></iframe>
 
 <script>
+  // URL fixa do sistema — nunca muda
+  var APP_URL = "https://script.google.com/macros/s/AKfycbzxwSgPYgLE-oNLAm3EaLLj32nWQRt7KoooM7S7A-Jn1FVd8Kv0LxLzYvJey5MWm1mFWQ/exec";
+
   // Registra o Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  var STORAGE_KEY = 're_crm_url';
+  // Busca e exibe a versão do último deploy
+  fetch('version.json?t=' + Date.now())
+    .then(r => r.json())
+    .then(data => {
+      var el = document.getElementById('version');
+      if (el && data.version) el.textContent = 'v' + data.version;
+    })
+    .catch(() => {});
 
-  function getStoredUrl() {
-    try { return localStorage.getItem(STORAGE_KEY); } catch(e) { return null; }
-  }
-
-  function storeUrl(url) {
-    try { localStorage.setItem(STORAGE_KEY, url); } catch(e) {}
-  }
-
-  function isValidGASUrl(url) {
-    return url && (
-      url.startsWith('https://script.google.com/macros/s/') ||
-      url.startsWith('https://script.googleusercontent.com/')
-    );
-  }
-
-  function saveUrl() {
-    var url = document.getElementById('urlInput').value.trim();
-    if (!isValidGASUrl(url)) {
-      document.getElementById('urlError').style.display = 'block';
-      return;
-    }
-    storeUrl(url);
-    document.getElementById('setup').style.display = 'none';
-    loadApp(url);
-  }
-
-  function loadApp(url) {
+  // Carrega o app
+  function loadApp() {
     var splash = document.getElementById('splash');
     var frame  = document.getElementById('frame');
-    splash.style.display = 'flex';
-    frame.src = url;
+    frame.src = APP_URL;
     frame.onload = function() {
       setTimeout(function() { splash.style.display = 'none'; }, 400);
     };
-    // Fallback: esconde splash após 8s mesmo que onload não dispare
     setTimeout(function() { splash.style.display = 'none'; }, 8000);
   }
 
-  // Ao iniciar
-  var stored = getStoredUrl();
-  if (stored) {
-    loadApp(stored);
-  } else {
-    document.getElementById('splash').style.display = 'none';
-    document.getElementById('setup').style.display = 'flex';
-  }
+  loadApp();
 </script>
 </body>
 </html>
