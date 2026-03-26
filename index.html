@@ -94,14 +94,24 @@
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  // Busca e exibe a versão do último deploy
-  fetch('version.json?t=' + Date.now())
-    .then(r => r.json())
-    .then(data => {
+  // Busca versão e recarrega automaticamente se houver atualização
+  var VERSION_KEY = 'pwa_version';
+  fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.version) return;
       var el = document.getElementById('version');
-      if (el && data.version) el.textContent = 'v' + data.version;
+      if (el) el.textContent = 'v' + data.version;
+      var stored = localStorage.getItem(VERSION_KEY);
+      if (stored && stored !== data.version) {
+        // Nova versão detectada — recarrega para atualizar o app
+        localStorage.setItem(VERSION_KEY, data.version);
+        window.location.reload(true);
+        return;
+      }
+      localStorage.setItem(VERSION_KEY, data.version);
     })
-    .catch(() => {});
+    .catch(function() {});
 
   // Carrega o app
   function loadApp() {

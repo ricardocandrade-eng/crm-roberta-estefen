@@ -11,6 +11,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Sempre vai para a rede — sem cache
+  // Navegação (index.html): sempre busca da rede sem cache
+  if (e.request.mode === 'navigate') {
+    e.respondWith(fetch(e.request, { cache: 'no-store' }));
+    return;
+  }
+  // Demais recursos: vai para a rede normalmente
   e.respondWith(fetch(e.request));
 });
